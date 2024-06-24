@@ -22,6 +22,11 @@ class Card {
         return cardElement;
     }
 
+    toggleFlip() {
+        this.isFlipped = !this.isFlipped;
+        this.isFlipped ? this.#flip() : this.#unflip();
+    }
+
     #flip() {
         const cardElement = this.element.querySelector(".card");
         cardElement.classList.add("flipped");
@@ -30,6 +35,15 @@ class Card {
     #unflip() {
         const cardElement = this.element.querySelector(".card");
         cardElement.classList.remove("flipped");
+    }
+
+    matches(otherCard) {
+        return this.name === otherCard.name;
+    }
+
+    reset() {
+        this.isFlipped = false;
+        this.#unflip();
     }
 }
 
@@ -74,7 +88,23 @@ class Board {
             this.onCardClick(card);
         }
     }
+
+    shuffleCards() {
+        for (let i = this.cards.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [this.cards[i], this.cards[j]] = [this.cards[j], this.cards[i]];
+        }
+    }
+
+    reset() {
+        this.cards.forEach(card => {
+            card.reset();
+        });
+        this.shuffleCards();
+        this.render();
+    }
 }
+
 
 class MemoryGame {
     constructor(board, flipDuration = 500) {
@@ -102,7 +132,39 @@ class MemoryGame {
             }
         }
     }
+
+    async checkForMatch() {
+        const [card1, card2] = this.flippedCards;
+        if (card1.matches(card2)) {
+            this.matchedCards.push(card1, card2);
+            this.flippedCards = [];
+            if (this.matchedCards.length === this.board.cards.length) {
+                this.gameOver();
+            }
+        } else {
+            setTimeout(() => {
+                card1.toggleFlip();
+                card2.toggleFlip();
+                this.flippedCards = [];
+            }, this.flipDuration);
+        }
+    }
+
+    resetGame() {
+        this.flippedCards.forEach(card => {
+            card.toggleFlip();
+        });
+        this.flippedCards = [];
+        this.matchedCards = [];
+        this.board.reset();
+    }
+
+    gameOver() {
+        alert("¡Felicidades! Has completado el juego.");
+        this.resetGame();
+    }
 }
+
 
 document.addEventListener("DOMContentLoaded", () => {
     const cardsData = [
